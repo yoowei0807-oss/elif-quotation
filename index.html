@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>全國電子｜門市報價單線上生成器</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --brand-red: #B51D2A;
+      --brand-red-dark: #941520;
+      --brand-pink: #FBEBEE;
+      --bg-page: #F3F4F6;
+      --card-bg: #FFFFFF;
+      --border: #E5E7EB;
+      --text-main: #1F2937;
+      --text-sub: #6B7280;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      line-height: 1.5;
+      padding-bottom: 40px;
+    }
+
+    /* 頂部導覽列 */
+    .topbar {
+      background: var(--brand-red);
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(181, 29, 42, 0.2);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .topbar-title {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: 0.5px;
+    }
+
+    .topbar-sub {
+      font-size: 13px;
+      font-weight: 400;
+      opacity: 0.9;
+    }
+
+    /* 主版面：左填表、右即時預覽 */
+    .main-container {
+      max-width: 1280px;
+      margin: 24px auto;
+      padding: 0 16px;
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    @media (max-width: 960px) {
+      .main-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+      padding: 22px;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--brand-red);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-left: 4px solid var(--brand-red);
+      padding-left: 10px;
+    }
+
+    .section-block {
+      margin-bottom: 22px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #F0F1F3;
+    }
+
+    .section-block:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    /* 門市點選列表 */
+    .store-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    @media (max-width: 520px) {
+      .store-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .store-item {
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.15s ease;
+      background: #FAFAFA;
+      font-size: 14px;
+      font-weight: 500;
+      user-select: none;
+    }
+
+    .store-item:hover {
+      border-color: #D97780;
+      background: #FFF9FA;
+    }
+
+    .store-item.active {
+      border-color: var(--brand-red);
+      background: var(--brand-pink);
+      color: var(--brand-red);
+      font-weight: 700;
+    }
+
+    .store-badge {
+      font-size: 11px;
+      padding: 2px 7px;
+      border-radius: 99px;
+      background: #E5E7EB;
+      color: #4B5563;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .store-item.active .store-badge {
+      background: var(--brand-red);
+      color: #fff;
+    }
+
+    /* 服務機構點選列表 */
+    .org-mode-tabs {
+      display: inline-flex;
+      background: #F3F4F6;
+      border-radius: 6px;
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .org-mode-btn {
+      border: none;
+      background: transparent;
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      color: var(--text-sub);
+      font-family: inherit;
+      font-weight: 500;
+    }
+
+    .org-mode-btn.active {
+      background: #fff;
+      color: var(--brand-red);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      font-weight: 700;
+    }
+
+    .org-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 240px;
+      overflow-y: auto;
+      padding-right: 4px;
+      margin-top: 8px;
+    }
+
+    .org-item {
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 9px 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      background: #FAFAFA;
+    }
+
+    .org-item:hover {
+      border-color: #D97780;
+      background: #FFF9FA;
+    }
+
+    .org-item.active {
+      border-color: var(--brand-red);
+      background: var(--brand-pink);
+    }
+
+    .org-item-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .org-item.active .org-item-name {
+      color: var(--brand-red);
+    }
+
+    .org-item-addr {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+
+    .empty-hint {
+      padding: 16px;
+      text-align: center;
+      color: var(--text-sub);
+      background: #F9FAFB;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    /* 表單欄位 */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 520px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .field-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    textarea {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text-main);
+      background: #fff;
+      transition: border-color 0.15s;
+    }
+
+    input:focus,
+    textarea:focus {
+      outline: none;
+      border-color: var(--brand-red);
+    }
+
+    /* 施工項目動態表格 */
+    .items-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .item-card {
+      background: #F9FAFB;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .item-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #4B5563;
+    }
+
+    .item-subtotal {
+      color: var(--brand-red);
+      font-weight: 700;
+      font-size: 13.5px;
+    }
+
+    .item-inputs {
+      display: grid;
+      grid-template-columns: 2.2fr 0.9fr 0.8fr 1.2fr;
+      gap: 8px;
+    }
+
+    @media (max-width: 560px) {
+      .item-inputs {
+        grid-template-columns: 1fr 1fr;
+      }
+      .item-inputs .col-name {
+        grid-column: 1 / -1;
+      }
+    }
+
+    .btn-remove {
+      border: none;
+      background: #FEE2E2;
+      color: #B91C1C;
+      border-radius: 5px;
+      padding: 2px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .btn-remove:hover {
+      background: #FECACA;
+    }
+
+    .btn-add-item {
+      margin-top: 10px;
+      width: 100%;
+      padding: 9px;
+      border: 1.5px dashed #D1D5DB;
+      background: #fff;
+      color: #374151;
+      border-radius: 8px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .btn-add-item:hover {
+      border-color: var(--brand-red);
+      color: var(--brand-red);
+      background: #FFF9FA;
+    }
+
+    /* 說明同步勾選 */
+    .auto-note-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      color: var(--text-sub);
+      font-weight: 400;
+      cursor: pointer;
+    }
+
+    /* 操作按鈕群組 */
+    .action-bar {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      flex: 1;
+      min-width: 200px;
+      background: var(--brand-red);
+      color: #fff;
+      border: none;
+      border-radius: 9px;
+      padding: 13px 18px;
+      font-size: 15.5px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(181, 29, 42, 0.25);
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .btn-primary:hover {
+      background: var(--brand-red-dark);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.99);
+    }
+
+    .btn-secondary {
+      background: #F3F4F6;
+      color: #374151;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 13px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .btn-secondary:hover {
+      background: #E5E7EB;
+    }
+
+    /* 右側預覽區 */
+    .preview-sticky {
+      position: sticky;
+      top: 72px;
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .canvas-wrapper {
+      background: #E5E7EB;
+      padding: 14px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+    }
+
+    #quoteCanvas {
+      width: 100%;
+      max-width: 580px;
+      height: auto;
+      background: #fff;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+      display: block;
+    }
+
+    /* 手機長按儲存彈窗 */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #fff;
+      border-radius: 12px;
+      max-width: 520px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .modal-hint {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--brand-red);
+      background: var(--brand-pink);
+      padding: 8px 12px;
+      border-radius: 7px;
+      margin-bottom: 12px;
+    }
+
+    .modal-box img {
+      width: 100%;
+      height: auto;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+    }
+
+    .modal-close {
+      margin-top: 12px;
+      width: 100%;
+      padding: 10px;
+      border: none;
+      background: #1F2937;
+      color: #fff;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-title">
+      <span>全國電子</span>
+      <span class="topbar-sub">門市報價單線上生成器</span>
+    </div>
+    <div class="topbar-sub">中區營業二部｜永齡專案適用</div>
+  </header>
+
+  <main class="main-container">
+    <!-- 左側填表區 -->
+    <section class="panel">
+      <!-- 1. 點選門市 -->
+      <div class="section-block">
+        <div class="section-title">
+          <span>1. 點選報價門市</span>
+        </div>
+        <div id="storeGrid" class="store-grid"></div>
+      </div>
+
+      <!-- 2. 點選服務機構 -->
+      <div class="section-block">
+        <div class="section-title">
+          <span>2. 選擇或輸入服務機構</span>
+          <div class="org-mode-tabs">
+            <button type="button" class="org-mode-btn active" data-mode="short">表格簡稱</button>
+            <button type="button" class="org-mode-btn" data-mode="legal">法人全銜</button>
+            <button type="button" class="org-mode-btn" data-mode="custom">手動輸入</button>
+          </div>
+        </div>
+
+        <div id="orgSelectArea">
+          <div id="orgList" class="org-list">
+            <div class="empty-hint">請先於上方點選「報價門市」，系統將自動帶出負責機構清單</div>
+          </div>
+        </div>
+
+        <div id="orgCustomArea" style="display: none; margin-top: 8px;">
+          <input type="text" id="customOrgInput" placeholder="請輸入服務機構或客戶單位名稱（如：社區文化協進會）" />
+        </div>
+      </div>
+
+      <!-- 3. 日期與報價主旨 -->
+      <div class="section-block">
+        <div class="section-title">
+          <span>3. 報價日期與主旨</span>
+        </div>
+        <div class="form-row">
+          <div class="field-group">
+            <label class="field-label" for="quoteDate">報價日期</label>
+            <input type="date" id="quoteDate" />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="quoteSubject">報價主旨（留空自動帶入首項名稱）</label>
+            <input type="text" id="quoteSubject" placeholder="例如：壁掛施工費" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. 施工 / 報價項目明細 -->
+      <div class="section-block">
+        <div class="section-title">
+          <span>4. 施工／報價項目明細</span>
+        </div>
+        <div id="itemsContainer" class="items-container"></div>
+        <datalist id="unitOptions">
+          <option value="組"></option>
+          <option value="式"></option>
+          <option value="台"></option>
+          <option value="趟"></option>
+          <option value="個"></option>
+          <option value="公尺"></option>
+        </datalist>
+        <button type="button" id="addItemBtn" class="btn-add-item">＋ 新增一筆項目</button>
+      </div>
+
+      <!-- 5. 報價說明 -->
+      <div class="section-block">
+        <div class="section-title">
+          <span>5. 報價說明</span>
+          <label class="auto-note-toggle">
+            <input type="checkbox" id="autoSyncNote" checked />
+            <span>依明細自動更新第 1 點</span>
+          </label>
+        </div>
+        <textarea id="quoteNotes" rows="4"></textarea>
+
+        <div class="action-bar">
+          <button type="button" id="downloadBtn" class="btn-primary">
+            <span>📥 產出並下載報價單圖片 (PNG)</span>
+          </button>
+          <button type="button" id="resetBtn" class="btn-secondary">清空重填</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 右側即時圖片預覽區 -->
+    <section class="panel preview-sticky">
+      <div class="preview-header">
+        <div class="section-title" style="margin-bottom: 0;">即時報價單預覽</div>
+        <span style="font-size: 12px; color: var(--text-sub);">高解析 PNG 格式</span>
+      </div>
+      <div class="canvas-wrapper">
+        <canvas id="quoteCanvas" width="1580" height="2260"></canvas>
+      </div>
+    </section>
+  </main>
+
+  <!-- 下載成功 / 手機長按儲存視窗 -->
+  <div id="imgModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-hint" id="modalHintText">圖片已產出！若使用手機 LINE 開啟，請長按下方圖片選擇「儲存圖片」</div>
+      <img id="exportedImgPreview" alt="報價單圖片預覽" />
+      <div style="display: flex; gap: 8px; margin-top: 12px;">
+        <button type="button" id="shareImgBtn" class="btn-primary" style="display: none; padding: 10px;">📤 分享／傳送至 LINE</button>
+        <button type="button" id="closeModalBtn" class="modal-close" style="margin-top: 0;">關閉視窗</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // 門市與負責機構資料庫（依據「中二部永齡專案.xlsx」工作表2 建置）
+    // ==========================================
+    const 門市資料庫 = [
+      {
+        code: "4115",
+        listLabel: "4115 育賢體驗館",
+        shortName: "育賢體驗館",
+        fullName: "全國電子育賢體驗館",
+        orgs: [
+          { id: 49, shortName: "麻煩小天使協會", legalName: "社團法人南投縣麻煩小天使協會", address: "南投縣中寮鄉永平路370-3號" },
+          { id: 178, shortName: "成青健康促進協會", legalName: "社團法人南投縣成青健康促進協會", address: "南投市文昌街188號" },
+          { id: 217, shortName: "良善社會福祉協會", legalName: "社團法人南投縣良善社會福祉關懷協會", address: "南投縣中寮鄉永平路370-3號" },
+          { id: 287, shortName: "福山社區發展協會", legalName: "南投縣南投市福山社區發展協會", address: "南投市福山里八卦路521-12號" },
+          { id: 313, shortName: "御史社區發展協會", legalName: "南投縣草屯鎮御史社區發展協會", address: "南投縣草屯鎮登輝路163號" }
+        ]
+      },
+      {
+        code: "4121",
+        listLabel: "4121 南投民族",
+        shortName: "南投民族門市",
+        fullName: "全國電子南投民族門市",
+        orgs: [
+          { id: 107, shortName: "龍眼林福利協會", legalName: "社團法人南投縣中寮鄉龍眼林福利協會", address: "南投縣中寮鄉龍安村龍南路100-1號" },
+          { id: 120, shortName: "左岸成長學苑", legalName: "社團法人南投縣左岸成長學苑關懷協會", address: "南投縣南投市彰南路一段441號" },
+          { id: 337, shortName: "德安啟智教養院", legalName: "財團法人南投縣私立德安啟智教養院", address: "南投縣南投市順溪北路一段8號" }
+        ]
+      },
+      {
+        code: "4129",
+        listLabel: "4129 Digital City 逢甲店",
+        shortName: "Digital City 逢甲店",
+        fullName: "全國電子 Digital City 逢甲店",
+        orgs: [
+          { id: 10, shortName: "臺灣合作社照顧聯盟", legalName: "社團法人臺灣合作社照顧聯盟", address: "台中市烏日區溪岸路8-3號" },
+          { id: 180, shortName: "台灣全民食物銀行", legalName: "社團法人台灣全民食物銀行協會", address: "台中市南區柳川東路一段88號" },
+          { id: 200, shortName: "台灣大米缸協會", legalName: "社團法人台灣大米缸永續關懷協會", address: "台中市南屯區文心一路301號" },
+          { id: 206, shortName: "台中市啟智協進會", legalName: "社團法人台中市啟智協進會", address: "台中市南區復興路三段314號3樓" }
+        ]
+      },
+      {
+        code: "4137",
+        listLabel: "4137 Digital City 大里店",
+        shortName: "Digital City 大里店",
+        fullName: "全國電子 Digital City 大里店",
+        orgs: [
+          { id: 64, shortName: "丁台社區發展協會", legalName: "臺中市霧峰區丁台社區發展協會", address: "台中市霧峰區丁台路444號" },
+          { id: 114, shortName: "台灣好牧人協會", legalName: "社團法人台灣基督教好牧人全人關顧協會", address: "台中市大里區中興路二段323號3樓" },
+          { id: 149, shortName: "大新社區發展協會", legalName: "臺中市大里區大新社區發展協會", address: "台中市大里區新興路99巷16弄56號" },
+          { id: 170, shortName: "愛鄰舍關懷協會", legalName: "社團法人臺中市愛鄰舍關懷協會", address: "台中市霧峰區育成路六號" }
+        ]
+      },
+      {
+        code: "4145",
+        listLabel: "4145 太平樹德店",
+        shortName: "太平樹德門市",
+        fullName: "全國電子太平樹德門市",
+        orgs: [
+          { id: 18, shortName: "富仁社區發展協會", legalName: "社團法人臺中市東區富仁社區發展協會", address: "台中市東區雙十路一段4之33號8樓之3" },
+          { id: 44, shortName: "台中市康復之友協會", legalName: "社團法人台中市康復之友協會", address: "台中市南屯區東興路一段450號" },
+          { id: 204, shortName: "台灣技職教育協會", legalName: "社團法人台灣技職教育產學研合作發展協會", address: "台中市大里區中湖路39號6樓" },
+          { id: 210, shortName: "台灣食物銀行聯合會", legalName: "社團法人台灣食物銀行聯合會", address: "台中市東區東光園路177巷2號" },
+          { id: 274, shortName: "中華牧羊人協會", legalName: "社團法人中華牧羊人青少年關懷協會", address: "台中市東區建中街17號" },
+          { id: 379, shortName: "慈光社會福利基金會", legalName: "財團法人台中市私立慈光社會福利慈善事業基金會", address: "台中市東區東英路303號" }
+        ]
+      },
+      {
+        code: "4147",
+        listLabel: "4147 Digital City 五權西店",
+        shortName: "Digital City 五權西店",
+        fullName: "全國電子 Digital City 五權西店",
+        orgs: [
+          { id: 20, shortName: "多福教育關懷協會", legalName: "社團法人臺中市多福教育關懷協會", address: "台中市南屯區文心南三路281號3樓" },
+          { id: 28, shortName: "瑪利亞社會福利基金會", legalName: "財團法人瑪利亞社會福利基金會", address: "台中市南屯區東興路一段450號" },
+          { id: 220, shortName: "台中市聲暉協進會", legalName: "社團法人台中市聲暉協進會", address: "台中市南屯區東興路一段450號" },
+          { id: 347, shortName: "社團法人台灣沐風關懷協會", legalName: "社團法人台灣沐風關懷協會", address: "台中市南屯區文心南五路三段160號" }
+        ]
+      },
+      {
+        code: "4149",
+        listLabel: "4149 水里店",
+        shortName: "水里門市",
+        fullName: "全國電子水里門市",
+        orgs: [
+          { id: 78, shortName: "迦南全人關懷協會", legalName: "迦南全人關懷協會", address: "南投縣水里鄉民族路208號" }
+        ]
+      },
+      {
+        code: "4153",
+        listLabel: "4153 Digital City 埔里店",
+        shortName: "Digital City 埔里店",
+        fullName: "全國電子 Digital City 埔里店",
+        orgs: [
+          { id: 26, shortName: "炫寬愛心教養家園", legalName: "財團法人南投縣私立炫寬愛心教養家園", address: "南投縣埔里鎮中正路555號" },
+          { id: 89, shortName: "原住民全人關懷協會", legalName: "南投縣原住民全人關懷協會", address: "南投縣仁愛鄉春陽村永樂巷6號" },
+          { id: 93, shortName: "慈恩社區發展協會", legalName: "南投縣埔里鎮慈恩社區發展協會", address: "南投縣埔里鎮九成街46號" },
+          { id: 123, shortName: "愚人之友基金會", legalName: "財團法人愚人之友社會福利慈善事業基金會", address: "南投縣埔里鎮鐵山路6號" },
+          { id: 127, shortName: "南投生活重建協會", legalName: "社團法人南投縣生活重建協會", address: "南投縣國姓鄉長壽巷83-3號" },
+          { id: 159, shortName: "德鹿谷社區發展協會", legalName: "南投縣仁愛鄉德鹿谷社區發展協會", address: "南投縣仁愛鄉德鹿谷村莎都部落1巷56號" },
+          { id: 215, shortName: "蜈蚣社區發展協會", legalName: "南投縣埔里鎮蜈蚣社區發展協會", address: "南投縣埔里鎮蜈蚣路36號" },
+          { id: 239, shortName: "五十甲社區發展協會", legalName: "南投縣埔里鎮五十甲社區發展協會", address: "南投縣埔里鎮民族二街58號" },
+          { id: 283, shortName: "台灣彩虹雙福協會", legalName: "社團法人台灣彩虹雙福協會", address: "南投縣埔里鎮北辰街147號" },
+          { id: 348, shortName: "博幼社會福利基金會", legalName: "財團法人博幼社會福利基金會", address: "南投縣埔里鎮安四街131號" }
+        ]
+      }
+    ];
+
+    // ==========================================
+    // 狀態管理
+    // ==========================================
+    const 狀態 = {
+      選取門市代碼: "",
+      選取機構ID: null,
+      機構模式: "short", // 'short' | 'legal' | 'custom'
+      自訂機構名稱: "",
+      明細列表: [
+        { name: "", qty: "", unit: "組", price: "" }
+      ]
+    };
+
+    const 預設固定條款 = [
+      "2. 施工日期及付款方式，由雙方另行確認。",
+      "3. 稅別由報價門市確認。"
+    ];
+
+    // ==========================================
+    // 工具函式：千分位與繁體中文財務大寫
+    // ==========================================
+    function 格式化千分位(數值) {
+      const n = Math.round(Number(數值) || 0);
+      return n.toLocaleString("en-US");
+    }
+
+    function 轉中文大寫(金額) {
+      const n = Math.round(Math.max(0, Number(金額) || 0));
+      if (n === 0) return "零";
+      const 數字 = ["零", "壹", "貳", "參", "肆", "伍", "陸", "柒", "捌", "玖"];
+      const 小單位 = ["", "拾", "佰", "仟"];
+      const 大單位 = ["", "萬", "億", "兆"];
+      const str = String(n);
+      const len = str.length;
+      let 結果 = "";
+      let 零待補 = false;
+
+      for (let i = 0; i < len; i++) {
+        const num = Number(str[i]);
+        const pos = len - 1 - i;
+        const 大組 = Math.floor(pos / 4);
+        const 小位 = pos % 4;
+
+        if (num === 0) {
+          零待補 = true;
+        } else {
+          if (零待補) {
+            結果 += "零";
+            零待補 = false;
+          }
+          結果 += 數字[num] + 小單位[小位];
+        }
+
+        if (小位 === 0 && 大組 > 0) {
+          const groupStart = Math.max(0, i - 3);
+          const groupSlice = str.slice(groupStart, i + 1);
+          if (Number(groupSlice) > 0) {
+            結果 += 大單位[大組];
+          }
+        }
+      }
+      return 結果;
+    }
+
+    function 取得今日字串() {
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, "0");
+      const d = String(now.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function 取得當前門市物件() {
+      return 門市資料庫.find(s => s.code === 狀態.選取門市代碼) || null;
+    }
+
+    function 取得服務機構顯示名稱() {
+      if (狀態.機構模式 === "custom") {
+        return 狀態.自訂機構名稱.trim();
+      }
+      const store = 取得當前門市物件();
+      if (!store || !狀態.選取機構ID) return "";
+      const org = store.orgs.find(o => o.id === 狀態.選取機構ID);
+      if (!org) return "";
+      return 狀態.機構模式 === "legal" ? org.legalName : org.shortName;
+    }
+
+    // ==========================================
+    // 自動產生報價說明第 1 點
+    // ==========================================
+    function 更新自動報價說明() {
+      const autoBox = document.getElementById("autoSyncNote");
+      const notesEl = document.getElementById("quoteNotes");
+      if (!autoBox.checked) return;
+
+      const 有效項目 = 狀態.明細列表.filter(it => it.name.trim() || Number(it.qty) > 0 || Number(it.price) > 0);
+      let 第一點 = "1. 報價項目與金額如上表所列。";
+
+      if (有效項目.length === 1) {
+        const it = 有效項目[0];
+        const 名稱 = it.name.trim() || "施工項目";
+        const 數量 = Number(it.qty) || 0;
+        const 單位 = it.unit.trim() || "組";
+        const 單價 = Number(it.price) || 0;
+        const 合計 = Math.round(數量 * 單價);
+        第一點 = `1. ${名稱}每${單位} ${格式化千分位(單價)} 元，共施作 ${數量} ${單位}，合計 ${格式化千分位(合計)} 元。`;
+      } else if (有效項目.length > 1) {
+        const 總計 = 有效項目.reduce((sum, it) => sum + Math.round((Number(it.qty) || 0) * (Number(it.price) || 0)), 0);
+        const 摘要 = 有效項目.map(it => {
+          const 名稱 = it.name.trim() || "項目";
+          const 數量 = Number(it.qty) || 0;
+          const 單位 = it.unit.trim() || "組";
+          const 單價 = Number(it.price) || 0;
+          return `${名稱} ${數量} ${單位}（每${單位} ${格式化千分位(單價)} 元）`;
+        }).join("、");
+        第一點 = `1. 本報價包含：${摘要}，合計 ${格式化千分位(總計)} 元。`;
+      }
+
+      // 保留使用者第 2 點以後的內容（若有），否則使用預設條款
+      const 現有行 = notesEl.value.split("\n").map(s => s.trim()).filter(Boolean);
+      const 後續條款 = 現有行.length >= 2 ? 現有行.slice(1) : 預設固定條款;
+      notesEl.value = [第一點, ...後續條款].join("\n");
+    }
+
+    // ==========================================
+    // 介面渲染：門市、機構、項目列表
+    // ==========================================
+    function 渲染門市列表() {
+      const grid = document.getElementById("storeGrid");
+      grid.innerHTML = "";
+      門市資料庫.forEach(store => {
+        const div = document.createElement("div");
+        div.className = "store-item" + (狀態.選取門市代碼 === store.code ? " active" : "");
+        div.innerHTML = `
+          <span>${store.listLabel}</span>
+          <span class="store-badge">${store.orgs.length} 家機構</span>
+        `;
+        div.addEventListener("click", () => {
+          狀態.選取門市代碼 = store.code;
+          // 若該門市只有 1 家機構則自動幫選，否則預設選第 1 家方便快速作業
+          狀態.選取機構ID = store.orgs.length > 0 ? store.orgs[0].id : null;
+          渲染門市列表();
+          渲染機構列表();
+          繪製報價單();
+        });
+        grid.appendChild(div);
+      });
+    }
+
+    function 渲染機構列表() {
+      const orgSelectArea = document.getElementById("orgSelectArea");
+      const orgCustomArea = document.getElementById("orgCustomArea");
+      const listEl = document.getElementById("orgList");
+
+      if (狀態.機構模式 === "custom") {
+        orgSelectArea.style.display = "none";
+        orgCustomArea.style.display = "block";
+        return;
+      }
+
+      orgSelectArea.style.display = "block";
+      orgCustomArea.style.display = "none";
+
+      const store = 取得當前門市物件();
+      if (!store) {
+        listEl.innerHTML = `<div class="empty-hint">請先於上方點選「報價門市」，系統將自動帶出負責機構清單</div>`;
+        return;
+      }
+
+      listEl.innerHTML = "";
+      store.orgs.forEach(org => {
+        const displayTitle = 狀態.機構模式 === "legal" ? org.legalName : org.shortName;
+        const item = document.createElement("div");
+        item.className = "org-item" + (狀態.選取機構ID === org.id ? " active" : "");
+        item.innerHTML = `
+          <div class="org-item-name">[${org.id}] ${displayTitle}</div>
+          <div class="org-item-addr">📍 ${org.address}</div>
+        `;
+        item.addEventListener("click", () => {
+          狀態.選取機構ID = org.id;
+          渲染機構列表();
+          繪製報價單();
+        });
+        listEl.appendChild(item);
+      });
+    }
+
+    function 渲染明細輸入區() {
+      const container = document.getElementById("itemsContainer");
+      container.innerHTML = "";
+
+      狀態.明細列表.forEach((item, index) => {
+        const 小計 = Math.round((Number(item.qty) || 0) * (Number(item.price) || 0));
+        const card = document.createElement("div");
+        card.className = "item-card";
+        card.innerHTML = `
+          <div class="item-card-header">
+            <span>項次 ${String(index + 1).padStart(2, "0")}</span>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span class="item-subtotal">小計：NT$ ${格式化千分位(小計)}</span>
+              ${狀態.明細列表.length > 1 ? `<button type="button" class="btn-remove" data-idx="${index}">刪除</button>` : ""}
+            </div>
+          </div>
+          <div class="item-inputs">
+            <input type="text" class="col-name" placeholder="施工項目名稱（如：壁掛施工費）" value="${轉義HTML(item.name)}" data-idx="${index}" data-field="name" />
+            <input type="number" min="0" step="any" placeholder="數量" value="${轉義HTML(item.qty)}" data-idx="${index}" data-field="qty" />
+            <input type="text" list="unitOptions" placeholder="單位" value="${轉義HTML(item.unit)}" data-idx="${index}" data-field="unit" />
+            <input type="number" min="0" step="1" placeholder="單價 (元)" value="${轉義HTML(item.price)}" data-idx="${index}" data-field="price" />
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      // 綁定輸入事件
+      container.querySelectorAll("input").forEach(inp => {
+        inp.addEventListener("input", e => {
+          const idx = Number(e.target.dataset.idx);
+          const field = e.target.dataset.field;
+          狀態.明細列表[idx][field] = e.target.value;
+
+          // 即時更新該卡片小計顯示（不重繪整個 DOM 以保持游標焦點）
+          const it = 狀態.明細列表[idx];
+          const sub = Math.round((Number(it.qty) || 0) * (Number(it.price) || 0));
+          const card = e.target.closest(".item-card");
+          if (card) {
+            card.querySelector(".item-subtotal").textContent = `小計：NT$ ${格式化千分位(sub)}`;
+          }
+
+          更新自動報價說明();
+          繪製報價單();
+        });
+      });
+
+      // 綁定刪除按鈕
+      container.querySelectorAll(".btn-remove").forEach(btn => {
+        btn.addEventListener("click", e => {
+          const idx = Number(e.target.dataset.idx);
+          狀態.明細列表.splice(idx, 1);
+          渲染明細輸入區();
+          更新自動報價說明();
+          繪製報價單();
+        });
+      });
+    }
+
+    function 轉義HTML(str) {
+      return String(str ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    // ==========================================
+    // Canvas 2D 像素級報價單繪製引擎（1:1 復刻範本）
+    // ==========================================
+    function 斷行計算(ctx, text, maxWidth) {
+      if (!text) return [""];
+      const chars = Array.from(text);
+      const lines = [];
+      let current = "";
+      for (const ch of chars) {
+        const test = current + ch;
+        if (ctx.measureText(test).width > maxWidth && current.length > 0) {
+          lines.push(current);
+          current = ch;
+        } else {
+          current = test;
+        }
+      }
+      if (current) lines.push(current);
+      return lines;
+    }
+
+    function 繪製報價單() {
+      const canvas = document.getElementById("quoteCanvas");
+      const ctx = canvas.getContext("2d");
+
+      const SCALE = 2.5; // 輸出寬度 1580px 高解析度
+      const W = 632;
+      const MARGIN_X = 45;
+      const CONTENT_W = W - MARGIN_X * 2; // 542
+      const RIGHT_X = W - MARGIN_X;       // 587
+      const FONT_FAMILY = `"Noto Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif`;
+
+      const store = 取得當前門市物件();
+      const 門市簡稱 = store ? store.shortName : "請選擇報價門市";
+      const 門市全銜 = store ? store.fullName : "全國電子（請選擇門市）";
+      const 服務機構 = 取得服務機構顯示名稱() || "—";
+
+      const rawDate = document.getElementById("quoteDate").value;
+      const 日期文字 = rawDate ? rawDate.replace(/-/g, "/") : "";
+
+      const 手動主旨 = document.getElementById("quoteSubject").value.trim();
+      const 首項名稱 = (狀態.明細列表[0]?.name || "").trim();
+      const 主旨文字 = 手動主旨 || 首項名稱 || "";
+
+      const 備註原始行 = document.getElementById("quoteNotes").value.split("\n");
+
+      // 先以測量用字型計算表格每列高度與說明區總高度，支援多項目自動延展頁面
+      ctx.font = `400 14px ${FONT_FAMILY}`;
+      const 單列模式 = 狀態.明細列表.length === 1;
+      const 列繪製資訊 = 狀態.明細列表.map((it, idx) => {
+        const 名稱 = it.name.trim() || "—";
+        const 名稱行 = 斷行計算(ctx, 名稱, 245);
+        const 行高 = 20;
+        const 內容高 = 名稱行.length * 行高;
+        const 垂直內距 = 單列模式 ? 28 : 15;
+        const 列高 = Math.max(單列模式 ? 76 : 48, 內容高 + 垂直內距 * 2);
+        const 數量數值 = Number(it.qty) || 0;
+        const 單價數值 = Number(it.price) || 0;
+        const 小計數值 = Math.round(數量數值 * 單價數值);
+        const 數量文字 = it.qty !== "" ? `${it.qty} ${(it.unit || "").trim()}`.trim() : "—";
+        return {
+          項次: String(idx + 1).padStart(2, "0"),
+          名稱行,
+          列高,
+          數量文字,
+          單價文字: it.price !== "" ? 格式化千分位(單價數值) : "0",
+          小計文字: 格式化千分位(小計數值),
+          小計數值
+        };
+      });
+
+      const 總金額 = 列繪製資訊.reduce((s, r) => s + r.小計數值, 0);
+      const 表格總身高度 = 列繪製資訊.reduce((s, r) => s + r.列高, 0);
+
+      ctx.font = `400 13px ${FONT_FAMILY}`;
+      const 說明斷行列表 = [];
+      備註原始行.forEach(line => {
+        const trimmed = line.trimRight();
+        if (trimmed === "") {
+          說明斷行列表.push("");
+        } else {
+          斷行計算(ctx, trimmed, CONTENT_W).forEach(sub => 說明斷行列表.push(sub));
+        }
+      });
+
+      // 動態計算頁面總高度（預設標準高度 904，對應範本比例）
+      const TABLE_TOP = 232;
+      const TABLE_HEADER_H = 34;
+      const TOTAL_BOX_Y = TABLE_TOP + TABLE_HEADER_H + 表格總身高度 + 26;
+      const TOTAL_BOX_H = 57;
+      const UPPER_AMOUNT_Y = TOTAL_BOX_Y + TOTAL_BOX_H + 36;
+      const NOTES_TITLE_Y = UPPER_AMOUNT_Y + 42;
+      const NOTES_START_Y = NOTES_TITLE_Y + 26;
+      const NOTES_END_Y = NOTES_START_Y + 說明斷行列表.length * 24;
+
+      const H = Math.max(904, NOTES_END_Y + 100);
+      canvas.width = Math.round(W * SCALE);
+      canvas.height = Math.round(H * SCALE);
+
+      ctx.save();
+      ctx.scale(SCALE, SCALE);
+
+      // 1. 純白底色
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fillRect(0, 0, W, H);
+
+      // 2. 頂部全國電子紅橫條
+      ctx.fillStyle = "#B51D2A";
+      ctx.fillRect(0, 0, W, 19);
+
+      // 3. 標題列：「全國電子」與「報 價 單」
+      ctx.textBaseline = "alphabetic";
+      ctx.fillStyle = "#B51D2A";
+      ctx.font = `500 26px ${FONT_FAMILY}`;
+      ctx.textAlign = "left";
+      ctx.fillText("全國電子", MARGIN_X, 64);
+
+      ctx.fillStyle = "#222222";
+      ctx.font = `500 27px ${FONT_FAMILY}`;
+      ctx.textAlign = "right";
+      ctx.fillText("報 價 單", RIGHT_X, 64);
+
+      // 4. 副標題：門市名稱 + 報價主旨（過長時自動微縮字級避免超出邊界）
+      ctx.fillStyle = store ? "#222222" : "#9CA3AF";
+      const 副標題完整文字 = 主旨文字 ? `${門市簡稱}　${主旨文字}` : 門市簡稱;
+      let subFontSize = 20;
+      ctx.font = `500 ${subFontSize}px ${FONT_FAMILY}`;
+      while (ctx.measureText(副標題完整文字).width > CONTENT_W && subFontSize > 14) {
+        subFontSize -= 1;
+        ctx.font = `500 ${subFontSize}px ${FONT_FAMILY}`;
+      }
+      ctx.textAlign = "left";
+      ctx.fillText(副標題完整文字, MARGIN_X, 106, CONTENT_W);
+
+      // 5. 頂部分隔細線
+      ctx.strokeStyle = "#E0E0E0";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(MARGIN_X, 131);
+      ctx.lineTo(RIGHT_X, 131);
+      ctx.stroke();
+
+      // 6. 雙欄基本資訊區
+      ctx.fillStyle = "#333333";
+      ctx.font = `400 13.5px ${FONT_FAMILY}`;
+
+      ctx.textAlign = "left";
+      ctx.fillText(`服務機構：${服務機構}`, MARGIN_X, 162, 385);
+      ctx.fillText(`報價門市：${門市全銜}`, MARGIN_X, 190, 385);
+
+      ctx.textAlign = "right";
+      ctx.fillText(`報價日期：${日期文字}`, RIGHT_X, 162);
+      ctx.fillText(`幣別：新臺幣（元）`, RIGHT_X, 190);
+
+      // 7. 明細表頭（深紅底白字）
+      ctx.fillStyle = "#B51D2A";
+      ctx.fillRect(MARGIN_X, TABLE_TOP, CONTENT_W, TABLE_HEADER_H);
+
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = `500 13.5px ${FONT_FAMILY}`;
+      ctx.textBaseline = "middle";
+      const headerMidY = TABLE_TOP + TABLE_HEADER_H / 2;
+
+      ctx.textAlign = "left";
+      ctx.fillText("項次", 58, headerMidY);
+      ctx.fillText("施工項目", 108, headerMidY);
+      ctx.fillText("數量", 371, headerMidY);
+
+      ctx.textAlign = "center";
+      ctx.fillText("單價", 452, headerMidY);
+      ctx.fillText("金額", 541, headerMidY);
+
+      // 8. 明細內容列（淺灰底）
+      let curRowY = TABLE_TOP + TABLE_HEADER_H;
+      ctx.fillStyle = "#F6F4F5";
+      ctx.fillRect(MARGIN_X, curRowY, CONTENT_W, 表格總身高度);
+
+      列繪製資訊.forEach((row, idx) => {
+        const rowMidY = curRowY + row.列高 / 2;
+
+        // 多筆項目時繪製柔和分隔線
+        if (idx > 0) {
+          ctx.strokeStyle = "#E7E5E6";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(MARGIN_X + 10, curRowY);
+          ctx.lineTo(RIGHT_X - 10, curRowY);
+          ctx.stroke();
+        }
+
+        ctx.fillStyle = "#262626";
+        ctx.textBaseline = "middle";
+
+        // 項次
+        ctx.font = `400 13px ${FONT_FAMILY}`;
+        ctx.textAlign = "left";
+        ctx.fillText(row.項次, 58, rowMidY);
+
+        // 施工項目（支援多行垂直置中）
+        ctx.font = `400 14px ${FONT_FAMILY}`;
+        const lineH = 20;
+        const startTextY = rowMidY - ((row.名稱行.length - 1) * lineH) / 2;
+        row.名稱行.forEach((ln, lIdx) => {
+          ctx.fillText(ln, 108, startTextY + lIdx * lineH);
+        });
+
+        // 數量
+        ctx.font = `400 13.5px ${FONT_FAMILY}`;
+        ctx.textAlign = "left";
+        ctx.fillText(row.數量文字, 371, rowMidY);
+
+        // 單價與金額（靠右對齊）
+        ctx.textAlign = "right";
+        ctx.fillText(row.單價文字, 485, rowMidY);
+        ctx.fillText(row.小計文字, 576, rowMidY);
+
+        curRowY += row.列高;
+      });
+
+      // 9. 報價總金額粉紅底框
+      ctx.fillStyle = "#FBEBEE";
+      ctx.fillRect(MARGIN_X, TOTAL_BOX_Y, CONTENT_W, TOTAL_BOX_H);
+
+      const totalMidY = TOTAL_BOX_Y + TOTAL_BOX_H / 2;
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#333333";
+      ctx.font = `500 16px ${FONT_FAMILY}`;
+      ctx.textAlign = "left";
+      ctx.fillText("報價總金額", 60, totalMidY);
+
+      ctx.fillStyle = "#1F1F1F";
+      ctx.font = `500 22px ${FONT_FAMILY}`;
+      ctx.textAlign = "right";
+      ctx.fillText(`NT$ ${格式化千分位(總金額)}`, 576, totalMidY);
+
+      // 10. 金額大寫
+      ctx.textBaseline = "alphabetic";
+      ctx.fillStyle = "#262626";
+      ctx.font = `500 14.5px ${FONT_FAMILY}`;
+      ctx.textAlign = "left";
+      ctx.fillText(`金額大寫：新臺幣${轉中文大寫(總金額)}元整`, MARGIN_X, UPPER_AMOUNT_Y);
+
+      // 11. 報價說明
+      ctx.fillStyle = "#262626";
+      ctx.font = `500 14.5px ${FONT_FAMILY}`;
+      ctx.fillText("報價說明", MARGIN_X, NOTES_TITLE_Y);
+
+      ctx.fillStyle = "#333333";
+      ctx.font = `400 13px ${FONT_FAMILY}`;
+      說明斷行列表.forEach((ln, idx) => {
+        ctx.fillText(ln, MARGIN_X, NOTES_START_Y + idx * 24);
+      });
+
+      // 12. 頁尾分隔線與頁碼
+      const FOOTER_LINE_Y = H - 80;
+      ctx.strokeStyle = "#E5E5E5";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(MARGIN_X, FOOTER_LINE_Y);
+      ctx.lineTo(RIGHT_X, FOOTER_LINE_Y);
+      ctx.stroke();
+
+      ctx.fillStyle = "#8C8C8C";
+      ctx.font = `400 11.5px ${FONT_FAMILY}`;
+      ctx.textAlign = "left";
+      let 頁尾主旨 = "報價單";
+      if (主旨文字) {
+        頁尾主旨 = (主旨文字.endsWith("報價") || 主旨文字.endsWith("報價單")) ? 主旨文字 : `${主旨文字}報價`;
+      }
+      ctx.fillText(`${門市全銜}　${頁尾主旨}`, MARGIN_X, FOOTER_LINE_Y + 24);
+
+      ctx.textAlign = "right";
+      ctx.fillText("1 / 1", RIGHT_X, FOOTER_LINE_Y + 24);
+
+      ctx.restore();
+    }
+
+    // ==========================================
+    // 下載與分享圖片處理（相容電腦瀏覽器與手機 LINE 內建瀏覽器）
+    // ==========================================
+    let 最新產出檔案 = null;
+
+    function 執行下載報價單() {
+      if (!狀態.選取門市代碼) {
+        alert("請先點選「報價門市」！");
+        return;
+      }
+      const 機構名 = 取得服務機構顯示名稱();
+      if (!機構名) {
+        alert("請選擇或輸入「服務機構」名稱！");
+        return;
+      }
+      const 有填項目 = 狀態.明細列表.some(it => it.name.trim() !== "" && Number(it.qty) > 0);
+      if (!有填項目) {
+        alert("請至少填寫一項「施工項目名稱」與「數量」！");
+        return;
+      }
+
+      繪製報價單();
+      const canvas = document.getElementById("quoteCanvas");
+      const store = 取得當前門市物件();
+      const dateClean = (document.getElementById("quoteDate").value || "").replace(/-/g, "");
+      const safeOrg = 機構名.replace(/[\\/:*?"<>|]/g, "");
+      const fileName = `報價單_${store.shortName}_${safeOrg}_${dateClean}.png`;
+
+      const dataUrl = canvas.toDataURL("image/png");
+      document.getElementById("exportedImgPreview").src = dataUrl;
+
+      canvas.toBlob(blob => {
+        if (!blob) return;
+        最新產出檔案 = new File([blob], fileName, { type: "image/png" });
+
+        // 觸發瀏覽器自動下載
+        const blobUrl = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+
+        // 檢查手機是否支援原生分享（直接傳 LINE）
+        const shareBtn = document.getElementById("shareImgBtn");
+        if (navigator.canShare && navigator.canShare({ files: [最新產出檔案] })) {
+          shareBtn.style.display = "flex";
+        } else {
+          shareBtn.style.display = "none";
+        }
+
+        document.getElementById("imgModal").classList.add("open");
+      }, "image/png");
+    }
+
+    // ==========================================
+    // 初始化與事件綁定
+    // ==========================================
+    function 初始化() {
+      document.getElementById("quoteDate").value = 取得今日字串();
+
+      // 機構顯示模式切換
+      document.querySelectorAll(".org-mode-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".org-mode-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          狀態.機構模式 = btn.dataset.mode;
+          渲染機構列表();
+          繪製報價單();
+        });
+      });
+
+      document.getElementById("customOrgInput").addEventListener("input", e => {
+        狀態.自訂機構名稱 = e.target.value;
+        繪製報價單();
+      });
+
+      document.getElementById("quoteDate").addEventListener("input", 繪製報價單);
+      document.getElementById("quoteSubject").addEventListener("input", 繪製報價單);
+      document.getElementById("quoteNotes").addEventListener("input", 繪製報價單);
+
+      document.getElementById("autoSyncNote").addEventListener("change", () => {
+        更新自動報價說明();
+        繪製報價單();
+      });
+
+      document.getElementById("addItemBtn").addEventListener("click", () => {
+        狀態.明細列表.push({ name: "", qty: "", unit: "組", price: "" });
+        渲染明細輸入區();
+        更新自動報價說明();
+        繪製報價單();
+      });
+
+      document.getElementById("resetBtn").addEventListener("click", () => {
+        if (!confirm("確定要清空目前填寫的報價內容嗎？")) return;
+        狀態.明細列表 = [{ name: "", qty: "", unit: "組", price: "" }];
+        document.getElementById("quoteSubject").value = "";
+        document.getElementById("customOrgInput").value = "";
+        狀態.自訂機構名稱 = "";
+        document.getElementById("autoSyncNote").checked = true;
+        渲染明細輸入區();
+        更新自動報價說明();
+        繪製報價單();
+      });
+
+      document.getElementById("downloadBtn").addEventListener("click", 執行下載報價單);
+
+      document.getElementById("closeModalBtn").addEventListener("click", () => {
+        document.getElementById("imgModal").classList.remove("open");
+      });
+
+      document.getElementById("imgModal").addEventListener("click", e => {
+        if (e.target.id === "imgModal") {
+          document.getElementById("imgModal").classList.remove("open");
+        }
+      });
+
+      document.getElementById("shareImgBtn").addEventListener("click", async () => {
+        if (最新產出檔案 && navigator.share) {
+          try {
+            await navigator.share({
+              files: [最新產出檔案],
+              title: 最新產出檔案.name
+            });
+          } catch (_) {}
+        }
+      });
+
+      渲染門市列表();
+      渲染機構列表();
+      渲染明細輸入區();
+      更新自動報價說明();
+      繪製報價單();
+
+      // 等待網頁字型載入完成後重新渲染一次確保字體一致
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => 繪製報價單());
+      }
+    }
+
+    初始化();
+  </script>
+</body>
+</html>
